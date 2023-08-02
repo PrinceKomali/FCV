@@ -3,7 +3,7 @@ use std::ffi::*;
 use serenity::async_trait;
 use serenity::prelude::*;
 use serenity::model::channel::*;
-// use serenity::model::id::*;
+use serenity::model::id::ChannelId;
 use serenity::model::gateway::Ready;
 struct Handler;
 // #[no_mangle]
@@ -12,12 +12,12 @@ extern "C" {
     static OWNER_ROLE: usize;
     // static ROLES_CHANNEL: usize;
 
-    fn test(a: *const c_char) -> *const c_char;
+    fn trim_id(a: *const c_char) -> usize;
     fn is_id(a: *const c_char) -> bool;
 }
-fn c_to_s(s: *const c_char) -> & 'static str {
-    (unsafe { CStr::from_ptr(s) }).to_str().unwrap()
-}
+// fn c_to_s(s: *const c_char) -> &'static str {
+//     (unsafe { CStr::from_ptr(s) }).to_str().unwrap()
+// }
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
@@ -33,15 +33,30 @@ impl EventHandler for Handler {
                 }
             }
             if !is_mod {
-                msg.reply(&ctx, format!("This command can only be used by Mods")).await.unwrap();
+                msg.reply(&ctx, format!("[!] This command can only be used by Mods")).await.unwrap();
             } else {
-                // ctx.cache;
-                // println!("{}", c_to_s(unsafe{test(CString::new("").unwrap().as_ptr())}));
-                // println!("{}", unsafe{is_id(CString::new(args[1]).unwrap().as_ptr())});
-                // println!("{}", args.remove(0));
-                msg.reply(&ctx, format!("{}",unsafe{is_id(CString::new(args[1]).unwrap().as_ptr())})).await.unwrap();
+                if args.len() < 3 {
+                    msg.reply(&ctx, format!("[!] Need at least 3 arguments!")).await.unwrap();
+                    return;
+                }
+                let _ = args.remove(0);
+                let channel = CString::new(args.remove(0)).unwrap();//.as_ptr();
+                if !(unsafe { is_id(channel.as_ptr()) }) {
+                    msg.reply(&ctx, format!("[!] Argument 0 is not a valid channel!")).await.unwrap();
+                    return;
+                }
+                let channel_id = ChannelId(unsafe{trim_id(channel.as_ptr())} as u64);
+                match channel_id.say(&ctx, args.join(" ")).await {
+                    Ok(_) => {},
+                    Err(_) => {
+                    msg.reply(&ctx, format!("[!] Unable to send message. Channel may be invalid.")).await.unwrap();
+                    }
+                }
+
+                
+                // println!("{}", c_to_s());
+                // msg.reply(&ctx, format!("{}", unsafe{trim_id(channel.as_ptr())})).await.unwrap();
                 // println!("{}", );
-                // ChannelId(1136321118349828196).say(&ctx, "hi").await.unwrap();
             }
         }
     }
