@@ -17,11 +17,10 @@ w = int((tw - 2) / 4)
 abort = False
 if not os.path.exists("build"): os.mkdir("build")
 jobs = [
-    ("build/rust.a","rust/src","cargo build --manifest-path=rust/Cargo.toml --release; cp rust/target/release/lib_.a build/rust.a"),
+    ("build/rust.a","rust/src","cargo build --manifest-path=rust/Cargo.toml --release && cp rust/target/release/lib_.a build/rust.a"),
     ("build/ids.o", "src/ids.c", "gcc -Isrc -c -o build/ids.o src/ids.c"),
+    ("build/utils.o", "src/utils.d", "gdc -Isrc -c -o build/utils.o src/utils.d"),
     ("build/main.o", "src/main.d", "gdc -Isrc -c -o build/main.o src/main.d")
-    
-
 ]
 for job in jobs: 
     objs.append(job[0])
