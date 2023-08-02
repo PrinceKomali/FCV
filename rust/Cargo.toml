@@ -1,0 +1,15 @@
+[package]
+name = "_"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+
+crate-type=["staticlib"]
+[dependencies]
+tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
+
+[dependencies.serenity]
+default-features = false
+features = ["builder", "client", "gateway", "http", "model", "utils", "rustls_backend"]
+version = "0.11"
