@@ -18,6 +18,7 @@ abort = False
 if not os.path.exists("build"): os.mkdir("build")
 jobs = [
     ("build/rust.a","rust/src","cargo build --manifest-path=rust/Cargo.toml --release; cp rust/target/release/lib_.a build/rust.a"),
+    ("build/ids.o", "src/ids.c", "gcc -Isrc -c -o build/ids.o src/ids.c"),
     ("build/main.o", "src/main.d", "gdc -Isrc -c -o build/main.o src/main.d")
     
 
