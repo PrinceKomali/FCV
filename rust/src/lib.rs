@@ -3,15 +3,18 @@ use std::ffi::*;
 use serenity::async_trait;
 use serenity::prelude::*;
 use serenity::model::channel::*;
-use serenity::model::id::ChannelId;
+use serenity::model::id::{ ChannelId, RoleId };
 use serenity::model::gateway::Ready;
 struct Handler;
 extern "C" {
-    static MOD_ROLE: usize;
-    static OWNER_ROLE: usize;
-    static ROLES_CHANNEL: usize;
+    static MOD_ROLE: u64;
+    static OWNER_ROLE: u64;
+    static ROLES_CHANNEL: u64;
 
-    fn trim_id(a: *const c_char) -> usize;
+    // static NOTIF_ROLE: u64;
+    fn role_by_emoji(c: *const c_char) -> u64;
+    fn is_color(c: u64) -> bool;
+    fn trim_id(a: *const c_char) -> u64;
     fn is_id(a: *const c_char) -> bool;
 }
 #[async_trait]
@@ -19,10 +22,7 @@ impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         let mut is_mod = false;
         for role in msg.member.clone().unwrap().roles {
-            if
-                (role.0 as usize) == (unsafe { MOD_ROLE }) ||
-                (role.0 as usize) == (unsafe { OWNER_ROLE })
-            {
+            if role.0 == (unsafe { MOD_ROLE }) || role.0 == (unsafe { OWNER_ROLE }) {
                 is_mod = true;
             }
         }
@@ -156,7 +156,27 @@ impl EventHandler for Handler {
             reaction.channel_id.0 == ((unsafe { ROLES_CHANNEL }) as u64) &&
             reaction.user_id.unwrap().0 != ctx.cache.current_user().id.0
         {
-            let _ = reaction.delete(ctx).await;
+            let roles = reaction.member.clone().unwrap().roles;
+            let _ = reaction.delete(ctx.clone()).await;
+            let role = unsafe {
+                let c_emoji = CString::new(reaction.emoji.as_data()).unwrap();
+                role_by_emoji(c_emoji.as_ptr())
+            };
+            let mut member = ctx.http
+                .get_member(reaction.guild_id.unwrap().0, reaction.user_id.unwrap().0).await
+                .expect("???");
+            if unsafe { is_color(role) } {
+                for r in roles.clone() {
+                    if unsafe { is_color(r.0) } {
+                        member.remove_role(&ctx, r).await.unwrap();
+                    }
+                }
+            }
+            if roles.contains(&RoleId(role)) {
+                member.remove_role(&ctx, role).await.unwrap();
+            } else {
+                member.add_role(&ctx, &RoleId(role)).await.unwrap();
+            }
         }
     }
     async fn ready(&self, _: Context, ready: Ready) {
