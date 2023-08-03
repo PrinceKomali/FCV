@@ -47,7 +47,12 @@ impl EventHandler for Handler {
             }
             let channel_id = ChannelId((unsafe { trim_id(channel.as_ptr()) }) as u64);
             match channel_id.say(&ctx, args.join(" ")).await {
-                Ok(_) => {}
+                Ok(_) => {
+                    msg.react(
+                        &ctx,
+                        ReactionType::try_from("\u{2705}".to_string()).unwrap()
+                    ).await.unwrap();
+                }
                 Err(_) => {
                     msg.reply(
                         &ctx,
@@ -69,7 +74,7 @@ impl EventHandler for Handler {
                 return;
             }
             let cmd = args.remove(0);
-            let channel = CString::new(args.remove(0)).unwrap(); 
+            let channel = CString::new(args.remove(0)).unwrap();
             if !(unsafe { is_id(channel.as_ptr()) }) {
                 msg.reply(&ctx, format!("[!] Argument 0 is not a valid channel!")).await.unwrap();
                 return;
@@ -108,7 +113,12 @@ impl EventHandler for Handler {
                         ReactionType::try_from(args.remove(0).to_string()).unwrap()
                     ).await
                 {
-                    Ok(_) => {}
+                    Ok(_) => {
+                        msg.react(
+                            &ctx,
+                            ReactionType::try_from("\u{2705}".to_string()).unwrap()
+                        ).await.unwrap();
+                    }
                     Err(_) => {
                         msg.reply(
                             &ctx,
@@ -124,7 +134,12 @@ impl EventHandler for Handler {
                         m
                     }).await
                 {
-                    Ok(_) => {}
+                    Ok(_) => {
+                        msg.react(
+                            &ctx,
+                            ReactionType::try_from("\u{2705}".to_string()).unwrap()
+                        ).await.unwrap();
+                    }
                     Err(_) => {
                         msg.reply(
                             &ctx,
